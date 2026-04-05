@@ -8,7 +8,8 @@ from rich.console import Console
 from rich.panel import Panel
 
 from bmad_agent.api_client import ApiClient
-from bmad_agent.config import AgentConfig
+from bmad_agent.config import load_config, is_configured, CONFIG_FILE
+from bmad_agent.setup_wizard import run_setup
 from bmad_agent.watcher import FolderWatcher
 
 console = Console()
@@ -23,22 +24,25 @@ def main() -> None:
     ))
     console.print()
 
-    # Config laden
-    config = AgentConfig()
+    # Config laden oder Setup starten
+    config = load_config()
 
-    if not config.email or not config.password:
-        console.print("[red]Fehler:[/] BMAD_EMAIL und BMAD_PASSWORD müssen gesetzt sein.")
+    # --setup Flag oder erste Nutzung
+    if "--setup" in sys.argv or not is_configured(config):
+        config = run_setup(config)
+        if not is_configured(config):
+            console.print("[red]Setup nicht abgeschlossen.[/]")
+            sys.exit(1)
+    else:
+        console.print(f"[dim]Config: {CONFIG_FILE}[/]")
+        console.print(f"[dim]Ändern: bmad-agent --setup[/]")
         console.print()
-        console.print("[dim]Erstelle eine .env Datei:[/]")
-        console.print('  BMAD_SERVER_URL=https://docai.pixel-by-design.de')
-        console.print('  BMAD_EMAIL=deine@email.de')
-        console.print('  BMAD_PASSWORD=dein-passwort')
-        console.print('  BMAD_WATCH_DIR=/pfad/zum/ordner')
-        sys.exit(1)
 
     # Verbinden
-    console.print(f"[bold]Server:[/] {config.server_url}")
-    console.print(f"[bold]User:[/] {config.email}")
+    console.print(f"[bold]Server:[/] {config['server_url']}")
+    console.print(f"[bold]User:[/] {config['email']}")
+    if config.get("workspace_name"):
+        console.print(f"[bold]Workspace:[/] {config['workspace_name']}")
     console.print()
 
     client = ApiClient(config)
@@ -46,24 +50,27 @@ def main() -> None:
 
     if not client.login():
         console.print("[red]✗ Login fehlgeschlagen[/]")
-        console.print("[dim]Prüfe BMAD_EMAIL und BMAD_PASSWORD in .env[/]")
+        console.print("[dim]Starte 'bmad-agent --setup' um dich neu anzumelden.[/]")
         sys.exit(1)
 
-    console.print(f"[green]✓[/] Workspace: {client.workspace_id}")
+    console.print(f"[green]✓[/] Workspace: {client.workspace_name or client.workspace_id}")
     console.print()
 
-    # Watcher starten
+    # Ordner einrichten
+    console.print("[bold]Überwachte Ordner:[/]")
     watcher = FolderWatcher(config, client)
     watcher.setup()
-
-    # Einmal-Scan für bestehende Dateien
-    console.print("[bold]Initaler Scan...[/]")
-    found = watcher.scan_once()
-    if found == 0:
-        console.print("[dim]Keine neuen Dateien gefunden.[/]")
     console.print()
 
-    # Endlos-Loop
+    # Initialer Scan
+    found = watcher.scan_once()
+    if found == 0:
+        console.print("[dim]Keine neuen Dateien.[/]")
+    console.print()
+
+    # Loop
+    console.print("[bold]Agent läuft. Ctrl+C zum Beenden.[/]")
+    console.print()
     watcher.run_loop()
     client.close()
 

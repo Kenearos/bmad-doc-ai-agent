@@ -4,9 +4,7 @@ version = "1.0.0"
 description = "Desktop-Agent: Lokaler Ordner-Watcher → BMAD-Doc-AI Upload"
 requires-python = ">=3.10"
 dependencies = [
-    "watchfiles>=0.22",
     "httpx>=0.27",
-    "pydantic-settings>=2.3",
     "rich>=13.0",
 ]
 
