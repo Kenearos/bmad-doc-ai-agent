@@ -27,19 +27,26 @@ class FolderWatcher:
         self._seen: set[str] = set()
 
     def setup(self) -> None:
-        """Erstellt die Ordner-Struktur."""
+        """Erstellt die Ordner-Struktur (mit Console-Output)."""
+        self._init_dirs()
+        for watch_dir in self._watch_dirs:
+            console.print(f"  [green]→[/] {watch_dir}")
+
+    def setup_silent(self) -> None:
+        """Erstellt die Ordner-Struktur (ohne Output, für Tray-Modus)."""
+        self._init_dirs()
+
+    def _init_dirs(self) -> None:
+        """Erstellt Ordner und markiert vorhandene Dateien."""
         for watch_dir in self._watch_dirs:
             watch_dir.mkdir(parents=True, exist_ok=True)
             if self._move:
                 (watch_dir / "verarbeitet").mkdir(exist_ok=True)
             (watch_dir / "fehler").mkdir(exist_ok=True)
 
-            # Vorhandene Dateien als gesehen markieren
             for f in watch_dir.iterdir():
                 if f.is_file():
                     self._seen.add(str(f))
-
-            console.print(f"  [green]→[/] {watch_dir}")
 
     def scan_once(self) -> int:
         """Scannt alle Ordner und verarbeitet neue Dateien."""

@@ -28,7 +28,7 @@ def main() -> None:
     config = load_config()
 
     # --setup Flag oder erste Nutzung
-    if "--setup" in sys.argv or not is_configured(config):
+    if "--setup" in sys.argv or "--tray" not in sys.argv and not is_configured(config):
         config = run_setup(config)
         if not is_configured(config):
             console.print("[red]Setup nicht abgeschlossen.[/]")
@@ -38,7 +38,13 @@ def main() -> None:
         console.print(f"[dim]Ändern: bmad-agent --setup[/]")
         console.print()
 
-    # Verbinden
+    # Tray-Modus?
+    if "--tray" in sys.argv:
+        from bmad_agent.tray import run_tray
+        run_tray(config)
+        return
+
+    # CLI-Modus
     console.print(f"[bold]Server:[/] {config['server_url']}")
     console.print(f"[bold]User:[/] {config['email']}")
     if config.get("workspace_name"):

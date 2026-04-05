@@ -1,11 +1,14 @@
 [project]
 name = "bmad-doc-ai-agent"
-version = "1.0.0"
-description = "Desktop-Agent: Lokaler Ordner-Watcher → BMAD-Doc-AI Upload"
+version = "2.0.0"
+description = "Desktop-Agent: Lokaler Ordner-Watcher → BMAD-Doc-AI Upload (CLI + Tray)"
 requires-python = ">=3.10"
 dependencies = [
     "httpx>=0.27",
     "rich>=13.0",
+    "pystray>=0.19",
+    "Pillow>=10.0",
+    "plyer>=2.1",
 ]
 
 [project.scripts]

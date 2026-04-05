@@ -8,39 +8,86 @@ Lokaler Ordner-Watcher der neue Dokumente automatisch an deinen BMAD-Doc-AI Serv
 pip install -e .
 ```
 
-## Konfiguration
-
-```bash
-cp .env.example .env
-nano .env  # Email, Passwort, Ordner eintragen
-```
-
-## Starten
+## Erster Start
 
 ```bash
 bmad-agent
 ```
 
-Oder direkt:
+Beim ersten Start öffnet sich ein Setup-Wizard:
+1. **Server** — URL deines BMAD-Servers
+2. **Anmeldung** — Google oder E-Mail/Passwort
+3. **Ordner** — Welche Ordner überwacht werden sollen
+
+## Zwei Modi
+
+### CLI-Modus (Terminal / NAS / Server)
 ```bash
-python -m bmad_agent.cli
+bmad-agent
+```
+Läuft im Terminal, zeigt Upload-Status an. Ideal für NAS, Raspberry Pi, Server.
+
+### Tray-Modus (Desktop)
+```bash
+bmad-agent --tray
+```
+Zeigt ein System-Tray-Icon mit:
+- Grün = läuft, Rot = Fehler, Gelb = pausiert
+- Rechtsklick: Pausieren, Einstellungen, Beenden
+- Desktop-Notifications bei Upload
+
+### Einstellungen ändern
+```bash
+bmad-agent --setup
 ```
 
-## Was passiert
+## Als Dienst auf NAS/Server
 
-1. Agent verbindet sich mit deinem BMAD-Server
-2. Überwacht den konfigurierten Ordner (Standard: `~/Documents/BMAD-Eingang`)
-3. Neue PDFs, Bilder, DOCX werden automatisch hochgeladen
-4. Nach Upload: Datei wird in `verarbeitet/` verschoben
-5. Bei Fehler: Datei wird in `fehler/` verschoben
+### Linux (systemd)
+```bash
+cat > ~/.config/systemd/user/bmad-agent.service << EOF
+[Unit]
+Description=BMAD-Doc-AI Agent
+After=network.target
+
+[Service]
+ExecStart=$(which bmad-agent)
+Restart=always
+
+[Install]
+WantedBy=default.target
+EOF
+
+systemctl --user enable --now bmad-agent
+```
+
+### Synology NAS
+Task Scheduler → Create → Triggered Task → `bmad-agent`
 
 ## Ordner-Struktur
 
 ```
-BMAD-Eingang/
-├── rechnung.pdf          ← Neue Datei → wird hochgeladen
+Überwachter-Ordner/
+├── neue-rechnung.pdf     ← Wird automatisch hochgeladen
 ├── verarbeitet/
-│   └── rechnung.pdf      ← Nach erfolgreichem Upload
+│   └── neue-rechnung.pdf ← Nach erfolgreichem Upload
 └── fehler/
-    └── kaputt.xyz        ← Bei Fehler
+    └── kaputt.xyz        ← Bei Upload-Fehler
+```
+
+## Config
+
+Gespeichert in `~/.config/bmad-agent/config.json`:
+```json
+{
+  "server_url": "https://docai.pixel-by-design.de",
+  "auth_method": "google",
+  "email": "deine@email.de",
+  "watch_dirs": [
+    "~/Documents/BMAD-Eingang",
+    "~/NAS/Dokumente"
+  ],
+  "move_after_upload": true,
+  "file_extensions": [".pdf", ".png", ".jpg", ".docx"]
+}
 ```
