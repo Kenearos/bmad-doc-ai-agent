@@ -26,15 +26,13 @@ class FolderWatcher:
         self._poll = config.get("poll_interval", 2.0)
         self._seen: set[str] = set()
 
-    def setup(self) -> None:
-        """Erstellt die Ordner-Struktur (mit Console-Output)."""
+    def setup(self, verbose: bool = True) -> None:
+        """Erstellt die Ordner-Struktur. verbose=False unterdrückt den
+        Console-Output (Tray-Modus)."""
         self._init_dirs()
-        for watch_dir in self._watch_dirs:
-            console.print(f"  [green]→[/] {watch_dir}")
-
-    def setup_silent(self) -> None:
-        """Erstellt die Ordner-Struktur (ohne Output, für Tray-Modus)."""
-        self._init_dirs()
+        if verbose:
+            for watch_dir in self._watch_dirs:
+                console.print(f"  [green]→[/] {watch_dir}")
 
     def _init_dirs(self) -> None:
         """Erstellt Ordner und markiert vorhandene Dateien."""

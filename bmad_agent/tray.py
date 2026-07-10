@@ -30,10 +30,7 @@ def run_tray(config: dict) -> None:
     state = {
         "status": STATUS_CONNECTING,
         "uploaded": 0,
-        "errors": 0,
         "paused": False,
-        "watcher": None,
-        "client": None,
         "stop": False,
     }
 
@@ -104,7 +101,6 @@ def run_tray(config: dict) -> None:
     def watcher_loop() -> None:
         """Hintergrund-Thread: Verbinden + Überwachen."""
         client = ApiClient(config)
-        state["client"] = client
 
         if not client.login():
             state["status"] = STATUS_ERROR
@@ -119,8 +115,7 @@ def run_tray(config: dict) -> None:
         notify("BMAD Agent", f"Verbunden mit {ws_name}")
 
         watcher = FolderWatcher(config, client)
-        watcher.setup_silent()
-        state["watcher"] = watcher
+        watcher.setup(verbose=False)
 
         while not state["stop"]:
             if not state["paused"]:
